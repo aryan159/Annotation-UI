@@ -94,7 +94,7 @@
     <input type=text id="penetrationInput">
 </div>
 <div id="rightbox">
-    <button onclick=enterPressed()>Enter</button>
+    <button id="enter" onclick=enterPressed()>Enter</button>
     <button onclick=downloadCSV()> Generate and Download .csv</button>
 </div>
 
@@ -126,6 +126,26 @@
     let current = 0;
     let noOfFiles = 0;
     let storage = new Array(100);
+
+
+    var input1 = document.getElementById("rotationInput");
+    var input2 = document.getElementById("inspirationInput");
+    var input3 = document.getElementById("penetrationInput");
+
+    function pressEnter(e) {
+    // Number 13 is the "Enter" key on the keyboard
+    if (e.keyCode === 13) {
+        // Trigger the button element with a click
+        document.getElementById("enter").click();
+    }
+    }
+
+    // Execute a function when the user releases a key on the keyboard
+
+    // Execute a function when the user releases a key on the keyboard
+    input1.addEventListener("keyup", pressEnter);
+    input2.addEventListener("keyup", pressEnter);
+    input3.addEventListener("keyup", pressEnter);
 
     function downloadCSV(){
         let csvContent = "data:text/csv;charset=utf-8,";
