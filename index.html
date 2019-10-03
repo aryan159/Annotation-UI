@@ -42,17 +42,18 @@
     <br>
     <div class="row">
         <div class="col-md-6">
-            <div style="width:512px;height:512px;position:relative;color: white;display:inline-block;border-style:solid;border-color:black;"
-                 oncontextmenu="return false"
-                 class='disable-selection noIbar'
-                 unselectable='on'
-                 onselectstart='return false;'
-                 onmousedown='return false;'>
-                <div id="dicomImage"
-                     style="width:512px;height:512px;top:0px;left:0px; position:absolute">
+                <div style="width:512px;height:512px;position:relative;color: white;display:inline-block;border-style:solid;border-color:black;"
+                    oncontextmenu="return false"
+                    class="disable-selection noIbar"
+                    unselectable="on"
+                    onselectstart="return false;"
+                    onmousedown="return false;">
+                    <div id="dicomImage"
+                        style="width:512px;height:512px;top:0px;left:0px; position:absolute">
+                    </div>
                 </div>
             </div>
-        </div>
+        
         <!--
         <div class="col-md-6">
             <span>Transfer Syntax: </span><span id="transferSyntax"></span><br>
@@ -94,6 +95,9 @@
     <input type=text id="penetrationInput">
 </div>
 <div id="rightbox">
+    <p>Annotater's name</p>
+    <input id="name">
+    <p></p>
     <button id="enter" onclick=enterPressed()>Enter</button>
     <button onclick=downloadCSV()> Generate and Download .csv</button>
 </div>
@@ -126,6 +130,7 @@
     let current = 0;
     let noOfFiles = 0;
     let storage = new Array(100);
+    let isDICOM = true;
 
 
     var input1 = document.getElementById("rotationInput");
@@ -149,6 +154,7 @@
 
     function downloadCSV(){
         let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Annotated by " + document.getElementById("name").value + "\r\n";
         csvContent += "Image Name, Rotation, Inspiration, Penetration\r\n";
         storage.forEach(function(rowArray) {
             let row = rowArray.join(",");
@@ -187,9 +193,39 @@
     }
 
     function viewFile(file){
-        const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
-        loadAndViewImage(imageId);
+        console.log('file.target.result gives ' + file.target);
+        if (isDICOM){
+            const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+            loadAndViewImage(imageId);
+        }
+        else{
+            var img = document.getElementById('img');
+            if (img){
+                console.log("TRUEEEEE");
+                var reader = new FileReader();
+                reader.addEventListener("load", function () {
+                img.src = reader.result;
+                }, false);
+
+                reader.readAsDataURL(file);
+            }
+            var elem = document.getElementsByClassName('col-md-6')[0];
+            elem.parentNode.removeChild(elem);
+
+            var reader = new FileReader();
+
+            reader.onload = (function(theFile) {
+                return function(e) {
+                    var span = document.createElement('span');
+                    span.innerHTML = ['<img style="width:500px;height:500px;" id="img" src="', e.target.result,
+                            '"/>'].join('');
+                    document.getElementsByClassName('row')[1].insertBefore(span, null);
+                };
+            })(file);
+            reader.readAsDataURL(file);
+        }
     }
+    
 
     // this function gets called once the user drops the file onto the div
     function handleFileSelect(evt) {
@@ -199,6 +235,7 @@
         // Get the FileList object that contains the list of files that were dropped
         files = evt.dataTransfer.files;
         noOfFiles = files.length;
+        
         startWorkflow();
 
         // this UI is only built for a single file so just dump the first one
@@ -212,9 +249,9 @@
     }
 
     // Setup the dnd listeners.
-    const dropZone = document.getElementById('dicomImage');
-    dropZone.addEventListener('dragover', handleDragOver, false);
-    dropZone.addEventListener('drop', handleFileSelect, false);
+    //const dropZone = document.getElementById('dicomImage');
+    //dropZone.addEventListener('dragover', handleDragOver, false);
+    //dropZone.addEventListener('drop', handleFileSelect, false);
 
 
     cornerstoneWADOImageLoader.configure({
@@ -320,42 +357,19 @@
         // number for that file
         files = e.target.files;
         noOfFiles = files.length;
+        var regex = /[.]+dcm/;
+        if (regex.test(files[0].name)){
+            console.log("Regex passed");
+            isDICOM = true;
+        }
+        else{
+            console.log("Regex failed");
+            isDICOM = false;
+        }
         startWorkflow();
+        
     });
 
-    document.getElementById('toggleModalityLUT').addEventListener('click', function() {
-        const applyModalityLUT = document.getElementById('toggleModalityLUT').checked;
-        console.log('applyModalityLUT=', applyModalityLUT);
-        const image = cornerstone.getImage(element);
-        const viewport = cornerstone.getViewport(element);
-        if(applyModalityLUT) {
-            viewport.modalityLUT = image.modalityLUT;
-        } else {
-            viewport.modalityLUT = undefined;
-        }
-        cornerstone.setViewport(element, viewport);
-    });
-
-    document.getElementById('toggleVOILUT').addEventListener('click', function() {
-        const applyVOILUT = document.getElementById('toggleVOILUT').checked;
-        console.log('applyVOILUT=', applyVOILUT);
-        const image = cornerstone.getImage(element);
-        const viewport = cornerstone.getViewport(element);
-        if(applyVOILUT) {
-            viewport.voiLUT = image.voiLUT;
-        } else {
-            viewport.voiLUT = undefined;
-        }
-        cornerstone.setViewport(element, viewport);
-    });
-
-    document.getElementById('toggleCollapseInfo').addEventListener('click', function() {
-        if (document.getElementById('collapseInfo').style.display === 'none') {
-            document.getElementById('collapseInfo').style.display = 'block';
-        } else {
-            document.getElementById('collapseInfo').style.display = 'none';
-        }
-    });
+    
 </script>
 </html>
-
